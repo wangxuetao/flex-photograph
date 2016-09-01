@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+				xmlns:s="library://ns.adobe.com/flex/spark"
+				xmlns:mx="library://ns.adobe.com/flex/mx"
+				width="400" height="330"
+				creationComplete="application1_creationCompleteHandler(event)">
+	
+	
+	<fx:Style>
+		
+		.btn {
+			width: 150px;
+		}
+		.btn.border {
+			background-color: #FFFFFF;
+			border: 1px solid #ff6000;
+			color: #ff6000;
+			filter: none;
+			font-size: 16px;
+			font-weight:bold;
+			line-height: 40px;
+		}
+		.btn {
+			border-radius: 2px;
+			display: inline-block;
+			height: 42px;
+			text-align: center;
+		}
+		
+	</fx:Style>
+	
+	<mx:Box horizontalAlign="center" verticalAlign="middle"> 
+		<mx:VBox horizontalAlign="center" verticalAlign="middle">  
+			<mx:VideoDisplay id="vd" width="320" height="240"/>
+			<mx:Image id="img" visible="false" x="128" y="6" width="320" height="240"
+					  includeInLayout="false"/>
+			<mx:Button id="takePhoto" label="拍 照" click="paizhao(event)" styleName="btn border"/>
+			<mx:HBox id="resultHbox" visible="false" horizontalAlign="center" includeInLayout="false"
+					 verticalAlign="middle">
+				<mx:Button id="cancalBut" label="取 消" click="cancal(event)" styleName="btn border" />
+			</mx:HBox>
+		</mx:VBox>
+	</mx:Box>
+
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import mx.graphics.codec.JPEGEncoder;
+			import mx.utils.Base64Encoder;
+			
+			private var cam:Camera;
+			private var video:Video;
+			private var byteArray:ByteArray;
+			
+			protected function application1_creationCompleteHandler(event:FlexEvent):void {
+				initCamera();
+			}
+			
+			private function initCamera():void {
+				cam = Camera.getCamera();
+				cam.setMode(320,240,30);
+				cam.setQuality(0,100);
+				cam.setKeyFrameInterval(1);
+				cam.setQuality(0,100);
+				video = new Video(320, 240);
+				video.attachCamera(cam);
+				vd.addChild(video);
+			}
+			
+			protected function paizhao(event:MouseEvent):void {
+				var bitmapData:BitmapData = new BitmapData(vd.width,vd.height);
+				bitmapData.draw(vd);
+				
+				var jpeg:JPEGEncoder = new JPEGEncoder(100);
+				new JPEGEncoder
+				byteArray = jpeg.encode(bitmapData);
+				
+				video.attachCamera(null);
+				cam = null;
+				
+				img.visible = true;
+				img.includeInLayout = true;
+				vd.visible = false;
+				vd.includeInLayout = false;
+				
+				img.source = byteArray;
+				
+				resultHbox.visible = true;
+				resultHbox.includeInLayout = true;
+				takePhoto.visible = false;
+				takePhoto.includeInLayout = false;
+				
+				confirm();
+				
+			}
+			
+			protected function confirm():void {
+				var en:Base64Encoder = new Base64Encoder();
+				en.encodeBytes(byteArray);
+				ExternalInterface.call("confirmPhoto", en.toString());
+			}
+			
+			protected function cancal(event:MouseEvent):void {
+				
+				img.visible = false;
+				img.includeInLayout = false;
+				vd.visible = true;
+				vd.includeInLayout = true;
+				
+				resultHbox.visible = false;
+				resultHbox.includeInLayout = false;
+				takePhoto.visible = true;
+				takePhoto.includeInLayout = true;
+				
+				byteArray = null;
+				initCamera();
+				
+			}
+			
+		]]>
+	</fx:Script>
+	
+</mx:Application>
